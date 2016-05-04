@@ -1,4 +1,4 @@
-# FFTE Ruby wrapper with Numo::NArray
+# FFTE interface for Ruby with Numo::NArray
 
 ## FFTE
 * is a package to compute Discrete Fourier Transforms of
