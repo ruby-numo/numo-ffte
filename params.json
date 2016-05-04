@@ -1,0 +1,6 @@
+{
+  "name": "Numo-ffte",
+  "tagline": "",
+  "body": "# FFTE Ruby wrapper with Numo::NArray\r\n\r\n## FFTE\r\n* is a package to compute Discrete Fourier Transforms of\r\n  1-, 2- and 3- dimensional sequences of length (2^p)*(3^q)*(5^r),\r\n  developed by Prof. Daisuke Takahashi at University of Tsukuba.\r\n* Visit [FFTE web site](http://www.ffte.jp/)\r\n\r\n## Ruby wrapper\r\n* [GitHub site](https://github.com/masa16/numo-ffte)\r\n* [Tentative API Document](http://masa16.github.io/ffte/ref/frames.html)\r\n\r\n## Installation\r\n* FORTRAN compiler is required to build FFTE (gfortran, etc).\r\n* Install [Numo::NArray](https://github.com/masa16/numo-narray)\r\n* Install Numo::FFTE:\r\n```shell\r\n$ git clone git://github.com/masa16/numo-ffte.git\r\n$ cd numo-ffte\r\n$ rake build\r\n$ gem install pkg/numo-ffte-*.gem\r\n```\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
