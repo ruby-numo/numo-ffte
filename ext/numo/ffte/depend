@@ -10,9 +10,14 @@ ffte.c: ffte.erb.c
 .f.o:
 	$(F77) $(FFLAGS) -c -o $@ $<
 
-clean: cleansrc
+doc : ffte.c
+	yard doc $<
+
+clean: cleansrc cleandoc
 cleansrc:
 	-$(Q)$(RM) ffte.c
+cleandoc:
+	-$(Q)$(RM_RF) doc .yardoc
 
 distclean: distcleanpkg
 distcleanpkg:
