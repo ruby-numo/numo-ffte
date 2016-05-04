@@ -8,7 +8,7 @@
 
 ## Ruby wrapper
 * [GitHub site](https://github.com/masa16/numo-ffte)
-* [Tentative API Document](http://masa16.github.io/ffte/ref/frames.html)
+* [Tentative API Document](http://masa16.github.io/numo-ffte/ref/frames.html)
 
 ## Installation
 * FORTRAN compiler is required to build FFTE (gfortran, etc).
