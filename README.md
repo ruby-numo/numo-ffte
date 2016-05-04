@@ -14,7 +14,7 @@
 * FORTRAN compiler is required to build FFTE (gfortran, etc).
 * Install [Numo::NArray](https://github.com/masa16/numo-narray)
 * Install Numo::FFTE:
-  ```shell
+```shell
 $ git clone git://github.com/masa16/numo-ffte.git
 $ cd numo-ffte
 $ rake build
