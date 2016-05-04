@@ -9,3 +9,11 @@ ffte.c: ffte.erb.c
 
 .f.o:
 	$(F77) $(FFLAGS) -c -o $@ $<
+
+clean: cleansrc
+cleansrc:
+	-$(Q)$(RM) ffte.c
+
+distclean: distcleanpkg
+distcleanpkg:
+	-$(Q)$(RM_RF) ffte-?.?/

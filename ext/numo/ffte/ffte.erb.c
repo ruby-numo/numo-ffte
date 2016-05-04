@@ -11,9 +11,12 @@
 */
 
 #include <ruby.h>
-#include "narray.h"
-#include "template.h"
+#include "numo/narray.h"
+#include "numo/template.h"
 //#include "f2c.h"
+#define cDC numo_cDComplex
+#define cDF numo_cDFloat
+
 typedef int integer;
 
 typedef struct {
@@ -22,7 +25,6 @@ typedef struct {
     integer dummy;
 } fft_opt_t;
 
-static VALUE rb_mFFTE;
 static VALUE eRadixError;
 
 static inline
@@ -100,9 +102,9 @@ iter_fft_zfft<%=d%>d(na_loop_t *const lp)
   using Radix-2,3,4,5,8 FFT routine.
   Calculates on each last <%=d%>-dimention.
   @overload zfft<%=d%>d(narray,[iopt])
-  @param [NArray::DComplex] narray
+  @param [Numo::DComplex] narray
     >=<%=d%>-dimentional REAL NArray.
-        NArray::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
+        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
          NX = (2**IP) * (3**IQ) * (5**IR)<% if d>1 %>
          NY = (2**JP) * (3**JQ) * (5**JR)<% if d>2 %>
          NZ = (2**KP) * (3**KQ) * (5**KR)<% end; end %>
@@ -110,22 +112,22 @@ iter_fft_zfft<%=d%>d(na_loop_t *const lp)
     Transform direction.
          -1 FOR FORWARD TRANSFORM
          +1 FOR INVERSE TRANSFORM
-  @return [NArray::DComplex]
+  @return [Numo::DComplex]
     Result COMPLEX narray:
-        NArray::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-  @raise  [FFTE::RadixError] if NX<%if d>1%>, NY<% if d>2%>, NZ<%end;end%>
+        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
+  @raise  [Numo::FFTE::RadixError] if NX<%if d>1%>, NY<% if d>2%>, NZ<%end;end%>
     is not (2^p)*(3^q)*(5^r).
 */
 <% $funcs.push func="zfft#{d}d" %>
 static VALUE
-nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
+numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     VALUE vres, viopt=INT2NUM(1);
     volatile VALUE vna;
     int ndim;
     integer iopt=0;
-    ndfunc_arg_in_t ain[1] = {{cDComplex,<%=d%>}};
+    ndfunc_arg_in_t ain[1] = {{cDC,<%=d%>}};
     ndfunc_t ndf = { iter_fft_zfft<%=d%>d, NO_LOOP, 1, 0, ain, 0 };
 <% if d==1 %>
     fft_opt_t *g;
@@ -142,7 +144,7 @@ nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 <% (1..d).each do |i| %>
     n<%=i%> = NA_SHAPE(na)[NA_NDIM(na)-<%=i%>];
     if (!is235radix(n<%=i%>)) {
-        rb_raise(eRadixError,"%d-th dim length(=%ld) is not 2,3,5-radix",NA_NDIM(na)-<%=i%>,n<%=i%>);
+        rb_raise(eRadixError,"%d-th dim length(=%d) is not 2,3,5-radix",NA_NDIM(na)-<%=i%>,n<%=i%>);
     }
 <% end %>
 
@@ -202,21 +204,21 @@ iter_fft_zdfft<%=d%>d(na_loop_t *const lp)
   Calculates on each last <%=d%>-dimention.
   INVERSE TRANSFORM.
   @overload zdfft<%=d%>d(narray)
-  @param [NArray::DComplex] narray
+  @param [Numo::DComplex] narray
     >=<%=d%>-dimentional COMPLEX NArray.
-        NArray::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
+        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
          NX = (2**IP) * (3**IQ) * (5**IR)
          NY = (2**JP) * (3**JQ) * (5**JR)<% if d==3 %>
          NZ = (2**KP) * (3**KQ) * (5**KR)<% end %>
-  @return [NArray::DFloat]
+  @return [Numo::DFloat]
     Result REAL narray:
-        NArray::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-  @raise  [FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
+        Numo::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
+  @raise  [Numo::FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
     is not (2^p)*(3^q)*(5^r).
 */
 <% $funcs.push func="zdfft#{d}d" %>
 static VALUE
-nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
+numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     VALUE vres;
@@ -227,8 +229,8 @@ nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     integer <%=argmap(d){|i|"n#{i}"}%>;
     size_t n=1;
     size_t shape[<%=d%>];
-    ndfunc_arg_in_t ain[1] = {{cDComplex,<%=d%>}};
-    ndfunc_arg_out_t aout[1] = {{cDFloat,<%=d%>,shape}};
+    ndfunc_arg_in_t ain[1] = {{cDC,<%=d%>}};
+    ndfunc_arg_out_t aout[1] = {{cDF,<%=d%>,shape}};
     ndfunc_t ndf = { iter_fft_zdfft<%=d%>d, NO_LOOP, 1, 1, ain, aout };
 
     rb_scan_args(argc, args, "10", &vna);
@@ -299,21 +301,21 @@ iter_fft_dzfft<%=d%>d(na_loop_t *const lp)
   Calculates on each last <%=d%>-dimention.
   FORWARD TRANSFORM.
   @overload dzfft<%=d%>d(narray)
-  @param [NArray::DFloat] narray
+  @param [Numo::DFloat] narray
     >=<%=d%>-dimentional REAL NArray.
-        NArray::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
+        Numo::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
          NX = (2**IP) * (3**IQ) * (5**IR)
          NY = (2**JP) * (3**JQ) * (5**JR)<% if d==3 %>
          NZ = (2**KP) * (3**KQ) * (5**KR)<% end %>
-  @return [NArray::DComplex]
+  @return [Numo::DComplex]
     Result COMPLEX narray:
-        NArray::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
-  @raise  [FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
+        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
+  @raise  [Numo::FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
     is not (2^p)*(3^q)*(5^r).
 */
 <% $funcs.push func="dzfft#{d}d" %>
 static VALUE
-nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
+numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     volatile VALUE vb, vna;
@@ -324,8 +326,8 @@ nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     integer <%=argmap(d){|i|"n#{i}"}%>;
     size_t n=1;
     size_t shape[<%=d%>];
-    ndfunc_arg_in_t ain[1] = {{cDFloat,<%=d%>}};
-    ndfunc_arg_out_t aout[1] = {{cDComplex,<%=d%>,shape}};
+    ndfunc_arg_in_t ain[1] = {{cDF,<%=d%>}};
+    ndfunc_arg_out_t aout[1] = {{cDC,<%=d%>,shape}};
     ndfunc_t ndf = { iter_fft_dzfft<%=d%>d, NO_LOOP, 1, 1, ain, aout };
 
     rb_scan_args(argc, args, "10", &vna);
@@ -363,11 +365,14 @@ nary_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 void
 Init_ffte()
 {
-    rb_mFFTE = rb_define_module("FFTE");
+    VALUE mNumo,mFFTE;
+
+    mNumo = rb_const_get(rb_cObject,rb_intern("Numo"));
+    mFFTE = rb_define_module_under(mNumo,"FFTE");
     // Radix Error
-    eRadixError = rb_define_class_under(rb_mFFTE, "RadixError", rb_eStandardError);
+    eRadixError = rb_define_class_under(mFFTE,"RadixError",rb_eStandardError);
 
 <% $funcs.each do |f| %>
-    rb_define_module_function(rb_mFFTE, "<%=f%>", nary_ffte_<%=f%>, -1);
+    rb_define_module_function(mFFTE,"<%=f%>",numo_ffte_<%=f%>,-1);
 <% end %>
 }
