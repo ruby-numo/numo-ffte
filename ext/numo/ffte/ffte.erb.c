@@ -84,7 +84,7 @@ iter_fft_zfft<%=d%>d(na_loop_t *const lp)
     //n<%=i%> = lp->n[<%=i-1%>];
     n<%=i%> = lp->args[0].shape[<%=i-1%>];
 <% end %>
-    p1 = ((lp)->args[0]).ptr + ((lp)->iter[0]).pos;
+    p1 = ((lp)->args[0]).ptr + ((lp)->args[0].iter[0]).pos;
 
 <% if d==1 %>
     g = (fft_opt_t*)(lp->opt_ptr);
@@ -187,8 +187,8 @@ iter_fft_zdfft<%=d%>d(na_loop_t *const lp)
     n *= n<%=i%>;
 <% end %>
     b = (dcomplex*)(lp->opt_ptr);
-    p1 = ((lp)->args[0]).ptr + ((lp)->iter[0]).pos;
-    p2 = ((lp)->args[1]).ptr + ((lp)->iter[1]).pos;
+    p1 = ((lp)->args[0]).ptr + ((lp)->args[0].iter[0]).pos;
+    p2 = ((lp)->args[1]).ptr + ((lp)->args[1].iter[0]).pos;
 
     zdfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
 
@@ -285,8 +285,8 @@ iter_fft_dzfft<%=d%>d(na_loop_t *const lp)
     n *= n<%=i%>;
 <% end %>
     b = (dcomplex*)(lp->opt_ptr);
-    p1 = ((lp)->args[0]).ptr + ((lp)->iter[0]).pos;
-    p2 = ((lp)->args[1]).ptr + ((lp)->iter[1]).pos;
+    p1 = ((lp)->args[0]).ptr + ((lp)->args[0].iter[0]).pos;
+    p2 = ((lp)->args[1]).ptr + ((lp)->args[1].iter[0]).pos;
 
     for (i=0; i<n; i++) {
         ((double*)p2)[i] = ((double*)p1)[i];
