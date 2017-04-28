@@ -19,12 +19,6 @@
 
 typedef int integer;
 
-typedef struct {
-    dcomplex *b;
-    integer iopt;
-    integer dummy;
-} fft_opt_t;
-
 static VALUE eRadixError;
 
 static inline
@@ -35,20 +29,44 @@ int is235radix(integer n) {
     return (n & (n-1)) ? 0 : 1;
 }
 
+typedef struct {
+    dcomplex *buf;
+    integer iopt;
+    integer dummy;
+    size_t nb;
+} fft_opt_t;
+
+static void
+fft_opt_free(void *ptr)
+{
+    fft_opt_t *g = (fft_opt_t*)ptr;
+    xfree(g->buf);
+    xfree(g);
+}
+
+static size_t
+fft_opt_memsize(const void *ptr)
+{
+    const fft_opt_t *g = (const fft_opt_t*)ptr;
+    return sizeof(fft_opt_t) + g->nb * sizeof(dcomplex);
+}
+
+static const rb_data_type_t fft_opt_type = {
+    "Numo::FFTE/opt",
+    {NULL, fft_opt_free, fft_opt_memsize,},
+    0, 0, RUBY_TYPED_FREE_IMMEDIATELY|RUBY_TYPED_WB_PROTECTED
+};
+
 static inline fft_opt_t *
 alloc_fft_opt(int nb, integer iopt, VALUE *v)
 {
     fft_opt_t *g;
-    size_t sz1,sz2;
-    char *ptr;
-    sz1 = sizeof(fft_opt_t);
-    sz2 = sizeof(dcomplex)*nb;
-    ptr = xmalloc(sz1+sz2);
-    g = (fft_opt_t*)ptr;
-    ptr += sz1;
-    g->b = (dcomplex*)ptr;
+
+    g = ALLOC(fft_opt_t);
+    g->buf = ALLOC_N(dcomplex, nb);
     g->iopt = iopt;
-    *v = Data_Wrap_Struct(rb_cData,0,0,g);
+    g->nb = nb;
+    *v = TypedData_Wrap_Struct(rb_cData, &fft_opt_type, (void*)g);
     return g;
 }
 
@@ -89,7 +107,7 @@ iter_fft_zfft<%=d%>d(na_loop_t *const lp)
 <% if d==1 %>
     g = (fft_opt_t*)(lp->opt_ptr);
     iopt = g->iopt;
-    zfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, g->b);
+    zfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, g->buf);
 <% else %>
     iopt = *(integer*)(lp->opt_ptr);
     zfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &iopt);
@@ -123,10 +141,10 @@ static VALUE
 numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
-    VALUE vres, viopt=INT2NUM(1);
+    VALUE vres, viopt;
     VALUE vna;
     int ndim;
-    integer iopt=0;
+    integer iopt=1, iopt_zero=0;
     ndfunc_arg_in_t ain[1] = {{cDC,<%=d%>}};
     ndfunc_t ndf = { iter_fft_zfft<%=d%>d, NO_LOOP, 1, 0, ain, 0 };
 <% if d==1 %>
@@ -135,7 +153,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 <% end %>
     integer <%=argmap(d){|i|"n#{i}"}%>;
 
-    rb_scan_args(argc, args, "11", &vna, &viopt);
+    switch(rb_scan_args(argc, args, "11", &vna, &viopt)) {
+    case 2:
+        iopt = NUM2INT(viopt);
+    }
     GetNArray(vna,na);
     ndim = NA_NDIM(na);
     if (ndim<<%=d%>) {
@@ -151,13 +172,12 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     vres = na_copy(vna);
 
 <% if d==1 %>
-    g = alloc_fft_opt(n1*2, NUM2INT(viopt), &vopt);
-    zfft1d_(NULL, &n1, &iopt, g->b);
+    g = alloc_fft_opt(n1*2, iopt, &vopt);
+    zfft1d_(NULL, &n1, &iopt_zero, g->buf);
     na_ndloop3(&ndf, g, 1, vres);
     RB_GC_GUARD(vopt);
 <% else %>
-    zfft<%=d%>d_(NULL,  <%=argmap(d){|i|"&n#{i}"}%>, &iopt);
-    iopt = NUM2INT(viopt);
+    zfft<%=d%>d_(NULL,  <%=argmap(d){|i|"&n#{i}"}%>, &iopt_zero);
     na_ndloop3(&ndf, &iopt, 1, vres);
 <% end %>
 
@@ -176,9 +196,8 @@ iter_fft_zdfft<%=d%>d(na_loop_t *const lp)
 {
     char *p1, *p2;
     integer <%=argmap(d){|i|"n#{i}"}%>;
-    integer iopt=1;
     size_t i, n;
-    dcomplex *b;
+    fft_opt_t *g;
 
     //n1 = n = (lp->n[<%=d-1%>]-1)*2;
     n1 = n = (lp->args[0].shape[<%=d-1%>]-1)*2;
@@ -187,11 +206,11 @@ iter_fft_zdfft<%=d%>d(na_loop_t *const lp)
     n<%=i%> = lp->args[0].shape[<%=d-i%>];
     n *= n<%=i%>;
 <% end %>
-    b = (dcomplex*)(lp->opt_ptr);
+    g = (fft_opt_t*)(lp->opt_ptr);
     p1 = ((lp)->args[0]).ptr + ((lp)->args[0].iter[0]).pos;
     p2 = ((lp)->args[1]).ptr + ((lp)->args[1].iter[0]).pos;
 
-    zdfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
+    zdfft<%=d%>d_((dcomplex*)p1, <%=argmap(d){|i|"&n#{i}"}%>, &(g->iopt), g->buf);
 
     for (i=0; i<n; i++) {
         ((double*)p2)[i] = ((double*)p1)[i];
@@ -223,10 +242,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     VALUE vres;
-    VALUE vb, vna;
+    VALUE vb, vna, viopt;
     int ndim;
-    integer iopt=0;
-    dcomplex *b;
+    integer iopt=1, iopt_zero=0;
+    fft_opt_t *g;
     integer <%=argmap(d){|i|"n#{i}"}%>;
     size_t n=1;
     size_t shape[<%=d%>];
@@ -234,7 +253,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     ndfunc_arg_out_t aout[1] = {{cDF,<%=d%>,shape}};
     ndfunc_t ndf = { iter_fft_zdfft<%=d%>d, NO_LOOP, 1, 1, ain, aout };
 
-    rb_scan_args(argc, args, "10", &vna);
+    switch(rb_scan_args(argc, args, "11", &vna, &viopt)) {
+    case 2:
+        iopt = NUM2INT(viopt);
+    }
     GetNArray(vna,na);
     ndim = NA_NDIM(na);
     if (ndim<<%=d%>) {
@@ -255,11 +277,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 <% end %>
 
     vna = na_copy(vna);
-    b = ALLOC_N(dcomplex,n);
-    vb = Data_Wrap_Struct(rb_cData,0,0,b);
+    g = alloc_fft_opt(n, iopt, &vb);
 
-    zdfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
-    vres = na_ndloop3(&ndf, b, 1, vna);
+    zdfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt_zero, g->buf);
+    vres = na_ndloop3(&ndf, g, 1, vna);
     RB_GC_GUARD(vb);
 
     return vres;
@@ -277,23 +298,22 @@ iter_fft_dzfft<%=d%>d(na_loop_t *const lp)
 {
     char *p1, *p2;
     integer <%=argmap(d){|i|"n#{i}"}%>;
-    integer iopt=-1;
     size_t i, n=1;
-    dcomplex *b;
+    fft_opt_t *g;
 
 <% (1..d).each do |i| %>
     //n<%=i%> = lp->n[<%=d-i%>];
     n<%=i%> = lp->args[0].shape[<%=d-i%>];
     n *= n<%=i%>;
 <% end %>
-    b = (dcomplex*)(lp->opt_ptr);
+    g = (fft_opt_t*)(lp->opt_ptr);
     p1 = ((lp)->args[0]).ptr + ((lp)->args[0].iter[0]).pos;
     p2 = ((lp)->args[1]).ptr + ((lp)->args[1].iter[0]).pos;
 
     for (i=0; i<n; i++) {
         ((double*)p2)[i] = ((double*)p1)[i];
     }
-    dzfft<%=d%>d_((dcomplex*)p2, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
+    dzfft<%=d%>d_((dcomplex*)p2, <%=argmap(d){|i|"&n#{i}"}%>, &(g->iopt), g->buf);
 }
 
 
@@ -320,11 +340,12 @@ static VALUE
 numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
+    VALUE viopt;
     VALUE vb, vna;
     VALUE vres;
     int ndim;
-    integer iopt=0;
-    dcomplex *b;
+    integer iopt=1, iopt_zero=0;
+    fft_opt_t *g;
     integer <%=argmap(d){|i|"n#{i}"}%>;
     size_t n=1;
     size_t shape[<%=d%>];
@@ -332,7 +353,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     ndfunc_arg_out_t aout[1] = {{cDC,<%=d%>,shape}};
     ndfunc_t ndf = { iter_fft_dzfft<%=d%>d, NO_LOOP, 1, 1, ain, aout };
 
-    rb_scan_args(argc, args, "10", &vna);
+    switch(rb_scan_args(argc, args, "11", &vna, &viopt)) {
+    case 2:
+        iopt = NUM2INT(viopt);
+    }
     GetNArray(vna,na);
     ndim = NA_NDIM(na);
     if (ndim<<%=d%>) {
@@ -353,11 +377,10 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 <% end %>
 
     vna = na_copy(vna);
-    b = ALLOC_N(dcomplex,n);
-    vb = Data_Wrap_Struct(rb_cData,0,0,b);
+    g = alloc_fft_opt(n, iopt, &vb);
 
-    dzfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
-    vres = na_ndloop3(&ndf, b, 1, vna);
+    dzfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt_zero, g->buf);
+    vres = na_ndloop3(&ndf, g, 1, vna);
     RB_GC_GUARD(vb);
 
     return vres;
