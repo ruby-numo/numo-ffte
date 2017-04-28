@@ -36,7 +36,7 @@ int is235radix(integer n) {
 }
 
 static inline fft_opt_t *
-alloc_fft_opt(int nb, integer iopt, volatile VALUE *v)
+alloc_fft_opt(int nb, integer iopt, VALUE *v)
 {
     fft_opt_t *g;
     size_t sz1,sz2;
@@ -124,14 +124,14 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     VALUE vres, viopt=INT2NUM(1);
-    volatile VALUE vna;
+    VALUE vna;
     int ndim;
     integer iopt=0;
     ndfunc_arg_in_t ain[1] = {{cDC,<%=d%>}};
     ndfunc_t ndf = { iter_fft_zfft<%=d%>d, NO_LOOP, 1, 0, ain, 0 };
 <% if d==1 %>
     fft_opt_t *g;
-    volatile VALUE vopt;
+    VALUE vopt;
 <% end %>
     integer <%=argmap(d){|i|"n#{i}"}%>;
 
@@ -154,6 +154,7 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     g = alloc_fft_opt(n1*2, NUM2INT(viopt), &vopt);
     zfft1d_(NULL, &n1, &iopt, g->b);
     na_ndloop3(&ndf, g, 1, vres);
+    RB_GC_GUARD(vopt);
 <% else %>
     zfft<%=d%>d_(NULL,  <%=argmap(d){|i|"&n#{i}"}%>, &iopt);
     iopt = NUM2INT(viopt);
@@ -222,7 +223,7 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
     VALUE vres;
-    volatile VALUE vb, vna;
+    VALUE vb, vna;
     int ndim;
     integer iopt=0;
     dcomplex *b;
@@ -259,6 +260,7 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 
     zdfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
     vres = na_ndloop3(&ndf, b, 1, vna);
+    RB_GC_GUARD(vb);
 
     return vres;
 }
@@ -318,7 +320,7 @@ static VALUE
 numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 {
     narray_t *na;
-    volatile VALUE vb, vna;
+    VALUE vb, vna;
     VALUE vres;
     int ndim;
     integer iopt=0;
@@ -356,6 +358,7 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
 
     dzfft<%=d%>d_(NULL, <%=argmap(d){|i|"&n#{i}"}%>, &iopt, b);
     vres = na_ndloop3(&ndf, b, 1, vna);
+    RB_GC_GUARD(vb);
 
     return vres;
 }
