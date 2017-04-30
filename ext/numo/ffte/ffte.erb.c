@@ -393,7 +393,8 @@ Init_ffte()
 {
     VALUE mNumo,mFFTE;
 
-    mNumo = rb_const_get(rb_cObject,rb_intern("Numo"));
+    rb_require("numo/narray");
+    mNumo = rb_define_module("Numo");
     mFFTE = rb_define_module_under(mNumo,"FFTE");
     // Radix Error
     eRadixError = rb_define_class_under(mFFTE,"RadixError",rb_eStandardError);
