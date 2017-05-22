@@ -19,7 +19,7 @@ Gem::Specification.new do |spec|
   spec.description   = %q{FFTE development version.}
   spec.summary       = %q{FFTE development version}
   spec.homepage      = "https://github.com/ruby-numo/ffte"
-  spec.license       = "MIT"
+  spec.licenses      = ["Original","BSD-3-Clause"]
 
   spec.files         = `git ls-files Gemfile README.md Rakefile ext numo-ffte.gemspec spec`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
