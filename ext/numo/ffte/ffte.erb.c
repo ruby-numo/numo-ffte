@@ -116,25 +116,23 @@ iter_fft_zfft<%=d%>d(na_loop_t *const lp)
 
 
 /*
-  <%=d%>-dimentional COMPLEX FFT (Fast Fourier Transform)
+  <%=d%>-dimentional COMPLEX FFT
   using Radix-2,3,4,5,8 FFT routine.
   Calculates on each last <%=d%>-dimention.
   @overload zfft<%=d%>d(narray,[iopt])
-  @param [Numo::DComplex] narray
-    >=<%=d%>-dimentional REAL NArray.
-        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-         NX = (2**IP) * (3**IQ) * (5**IR)<% if d>1 %>
-         NY = (2**JP) * (3**JQ) * (5**JR)<% if d>2 %>
-         NZ = (2**KP) * (3**KQ) * (5**KR)<% end; end %>
-  @param [Numeric] iopt
-    Transform direction.
-         -1 FOR FORWARD TRANSFORM
-         +1 FOR INVERSE TRANSFORM
-  @return [Numo::DComplex]
-    Result COMPLEX narray:
-        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-  @raise  [Numo::FFTE::RadixError] if NX<%if d>1%>, NY<% if d>2%>, NZ<%end;end%>
-    is not (2^p)*(3^q)*(5^r).
+  @param [Numo::DComplex] narray \>=<%=d%>-dimentional Complex NArray with
+    `shape = [.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx]` where
+    `nx = (2**ip) * (3**iq) * (5**ir)<% if d>1 %>`,
+    `ny = (2**jp) * (3**jq) * (5**jr)<% if d>2 %>`,
+    `nz = (2**kp) * (3**kq) * (5**kr)<% end; end %>`.
+  @param [Numeric] iopt  Transform direction.
+    `iopt=-1` for FORWARD transform,
+    `iopt=+1` for INVERSE transform.
+    Default: `iopt=+1`.
+  @return [Numo::DComplex] Result DComplex NArray with
+    `shape = [.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx]`.
+  @raise  [Numo::FFTE::RadixError] if `nx`<%if d>1%>, `ny`<% if d>2%>, `nz`<%end;end%>
+    is not `(2^p)*(3^q)*(5^r)`.
 */
 <% $funcs.push func="zfft#{d}d" %>
 static VALUE
@@ -219,22 +217,21 @@ iter_fft_zdfft<%=d%>d(na_loop_t *const lp)
 
 
 /*
-  <%=d%>-dimentional COMPLEX-TO-REAL FFT (Fast Fourier Transform)
+  <%=d%>-dimentional COMPLEX-TO-REAL FFT
   using Radix-2,3,4,5,8 FFT routine.
   Calculates on each last <%=d%>-dimention.
-  INVERSE TRANSFORM.
+  This routine is INVERSE transform.
   @overload zdfft<%=d%>d(narray)
   @param [Numo::DComplex] narray
-    >=<%=d%>-dimentional COMPLEX NArray.
-        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
-         NX = (2**IP) * (3**IQ) * (5**IR)
-         NY = (2**JP) * (3**JQ) * (5**JR)<% if d==3 %>
-         NZ = (2**KP) * (3**KQ) * (5**KR)<% end %>
-  @return [Numo::DFloat]
-    Result REAL narray:
-        Numo::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-  @raise  [Numo::FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
-    is not (2^p)*(3^q)*(5^r).
+    \>=<%=d%>-dimentional DComplex NArray with
+    `shape =[.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx/2+1]` where
+    `nx = (2**ip) * (3**iq) * (5**ir)`,
+    `ny = (2**jp) * (3**jq) * (5**jr)<% if d==3 %>`,
+    `nz = (2**kp) * (3**kq) * (5**kr)<% end %>`.
+  @return [Numo::DFloat]  Result DFloat NArray with
+    `shape = [.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx]`
+  @raise  [Numo::FFTE::RadixError] if `nx`, `ny`<%if d>2%>, `nz`<%end%>
+    is not `(2^p)*(3^q)*(5^r)`.
 */
 <% $funcs.push func="zdfft#{d}d" %>
 static VALUE
@@ -318,22 +315,20 @@ iter_fft_dzfft<%=d%>d(na_loop_t *const lp)
 
 
 /*
-  <%=d%>-dimentional REAL-TO-COMPLEX FFT (Fast Fourier Transform)
+  <%=d%>-dimentional REAL-TO-COMPLEX FFT
   using Radix-2,3,4,5,8 FFT routine.
   Calculates on each last <%=d%>-dimention.
-  FORWARD TRANSFORM.
+  This routine is FORWARD transform.
   @overload dzfft<%=d%>d(narray)
-  @param [Numo::DFloat] narray
-    >=<%=d%>-dimentional REAL NArray.
-        Numo::DFloat(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX)
-         NX = (2**IP) * (3**IQ) * (5**IR)
-         NY = (2**JP) * (3**JQ) * (5**JR)<% if d==3 %>
-         NZ = (2**KP) * (3**KQ) * (5**KR)<% end %>
-  @return [Numo::DComplex]
-    Result COMPLEX narray:
-        Numo::DComplex(.., <%if d>2%>NZ, <%end;if d>1%>NY, <%end%>NX/2+1)
-  @raise  [Numo::FFTE::RadixError] if NX, NY<%if d>2%>, NZ<%end%>
-    is not (2^p)*(3^q)*(5^r).
+  @param [Numo::DFloat] narray \>=<%=d%>-dimentional DFloat NArray with
+    `shape = [.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx]` where
+    `nx = (2**ip) * (3**iq) * (5**ir)`,
+    `ny = (2**jp) * (3**jq) * (5**jr)<% if d==3 %>`,
+    `nz = (2**kp) * (3**kq) * (5**kr)<% end %>`.
+  @return [Numo::DComplex]  Result DComplex NArray with
+    `shape = [.., <%if d>2%>nz, <%end;if d>1%>ny, <%end%>nx/2+1]`
+  @raise  [Numo::FFTE::RadixError] if `nx`, `ny`<% if d>2%>, `nz`<%end%>
+    is not `(2^p)*(3^q)*(5^r)`.
 */
 <% $funcs.push func="dzfft#{d}d" %>
 static VALUE

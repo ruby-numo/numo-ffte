@@ -5,7 +5,7 @@ task :doc do
   src = %w[ffte.c]
   path = src.map{|s| File.join(dir,s)}
   sh "cd #{dir}; ruby extconf.rb; make #{src.join(' ')}"
-  sh "yard doc -o yard -r README.md #{path.join(' ')}"
+  sh "rm -rf yard .yardoc; yard doc -o yard -m markdown -r README.md #{path.join(' ')}"
 end
 
 task :cleandoc do
