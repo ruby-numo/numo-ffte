@@ -339,7 +339,7 @@ numo_ffte_<%=func%>(int argc, VALUE *args, VALUE mod)
     VALUE vb, vna;
     VALUE vres;
     int ndim;
-    integer iopt=1, iopt_zero=0;
+    integer iopt=-1, iopt_zero=0;
     fft_opt_t *g;
     integer <%=argmap(d){|i|"n#{i}"}%>;
     size_t n=1;
