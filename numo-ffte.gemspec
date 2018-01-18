@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["masa16.tanaka@gmail.com"]
   spec.description   = %q{FFTE development version.}
   spec.summary       = %q{FFTE development version}
-  spec.homepage      = "https://github.com/ruby-numo/ffte"
+  spec.homepage      = "https://github.com/ruby-numo/numo-ffte"
   spec.licenses      = ["Original","BSD-3-Clause"]
 
   spec.files         = `git ls-files Gemfile README.md Rakefile ext numo-ffte.gemspec spec`.split($/)

@@ -7,15 +7,15 @@
 * FFTE site: [FFTE web site](http://www.ffte.jp/)
 
 ## Ruby wrapper
-* [GitHub site](https://github.com/ruby-numo/ffte)
-* [Tentative API Document](http://ruby-numo.github.io/ffte/ref/frames.html)
+* [GitHub site](https://github.com/ruby-numo/numo-ffte)
+* [Tentative API Document](http://ruby-numo.github.io/ffte/yard/frames.html)
 
 ## Installation
 * FORTRAN compiler is required to build FFTE (gfortran, etc).
 * Install [Numo::NArray](https://github.com/ruby-numo/narray)
 * Install Numo::FFTE:
 ```shell
-$ git clone git://github.com/ruby-numo/ffte.git
+$ git clone git://github.com/ruby-numo/numo-ffte.git
 $ cd ffte
 $ rake build
 $ gem install pkg/numo-ffte-*.gem
